@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cousins Crew | 2026</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Montserrat:wght@400;900&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; color: white; font-family: 'Montserrat', sans-serif; }
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        
+        .content-wrapper {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 2; text-align: center; width: 90%; pointer-events: none;
+        }
+
+        #timer-container { transition: opacity 1s ease; }
+
+        #countdown-display {
+            font-family: 'Bungee', cursive; /* Fun, chunky font */
+            font-size: clamp(4rem, 18vw, 11rem);
+            margin: 0;
+            background: linear-gradient(45deg, #ff00ff, #00ffff, #ff00ff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine { to { background-position: 200% center; } }
+
+        #message-display { display: none; opacity: 0; transition: opacity 1.5s ease; }
+
+        .happy-new-year {
+            font-family: 'Bungee', cursive;
+            font-size: clamp(2.5rem, 10vw, 6rem);
+            color: #fff;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+            margin-bottom: 20px;
+        }
+
+        #typewriter {
+            font-weight: 400;
+            font-size: clamp(1.1rem, 4vw, 2rem);
+            line-height: 1.5;
+            max-width: 900px;
+            margin: 0 auto;
+            color: #00ffff;
+        }
+
+        .label {
+            letter-spacing: 10px; text-transform: uppercase; font-weight: 900;
+            color: #ff00ff; margin-bottom: 10px; font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div id="timer-container" class="content-wrapper">
+        <div class="label">Cousins Crew Loading...</div>
+        <h1 id="countdown-display">00:00:00</h1>
+    </div>
+
+    <div id="message-display" class="content-wrapper">
+        <h1 class="happy-new-year">HAPPY 2026!</h1>
+        <div id="typewriter"></div>
+    </div>
+
+    <script>
+        const TARGET_DATE = new Date('January 1, 2026 00:00:00').getTime();
+        const PASSAGE = "To the best cousins ever! 2025 was a movie, but 2026 is going to be the sequel of a lifetime. Let's make more chaotic memories, late-night talks, and epic wins. Love you guys! 🥂✨";
+
+        let scene, camera, renderer, particles;
+        
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(15000 * 3);
+            const colors = new Float32Array(15000 * 3);
+            
+            for(let i=0; i<45000; i++) {
+                pos[i] = (Math.random() - 0.5) * 15;
+                // Randomized Neon Colors (Pink, Cyan, White)
+                colors[i] = Math.random();
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const mat = new THREE.PointsMaterial({ 
+                size: 0.02, 
+                vertexColors: true, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            
+            particles = new THREE.Points(geo, mat);
+            scene.add(particles);
+            camera.position.z = 5;
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particles.rotation.y += 0.002;
+            particles.rotation.z += 0.001;
+            renderer.render(scene, camera);
+        }
+
+        function typeEffect() {
+            let i = 0;
+            const target = document.getElementById("typewriter");
+            const timer = setInterval(() => {
+                target.innerHTML += PASSAGE.charAt(i);
+                i++;
+                if (i >= PASSAGE.length) clearInterval(timer);
+            }, 40); // Faster typing for the cousins
+        }
+
+        function update() {
+            const now = new Date().getTime();
+            const diff = TARGET_DATE - now;
+            
+            if (diff <= 0) {
+                document.getElementById('timer-container').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('timer-container').style.display = 'none';
+                    const msg = document.getElementById('message-display');
+                    msg.style.display = 'block';
+                    setTimeout(() => { msg.style.opacity = '1'; typeEffect(); }, 100);
+                }, 1000);
+                return;
+            }
+
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            document.getElementById('countdown-display').innerText = 
+                `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            setTimeout(update, 1000);
+        }
+
+        init();
+        update();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
